@@ -1,13 +1,15 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import HomeScreen from './HomeScreen';
-import React from 'react';
+import React, {useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator, createStackNavigator} from '@react-navigation/native-stack';
 import DetailScreen from './DetailScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const Stack = createNativeStackNavigator();
+
 
   return (
     <NavigationContainer>

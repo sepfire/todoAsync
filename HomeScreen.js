@@ -1,70 +1,124 @@
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
-import { useState, useLayoutEffect, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, Button } from 'react-native';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { AntDesign } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function HomeScreen({route,navigation}){
+const STORAGE_KEY = '@todo_key'
 
-    const [todos, setTodos] = useState(
-        Array(20).fill('').map((_, i)=> (`Test ${i}`))
-    );
+export default function HomeScreen({ route, navigation }) {
+
+
+    // Define the state to store the todos
+    const [todos, setTodos] = useState([]);
+    // Store data in AsyncStorage
+    const storeData = async (value) => {
+        try {
+            const jsonValue = JSON.stringify(value);
+            await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    // Get data from AsyncStorage
+    const getData = async () => {
+        try {
+            return await AsyncStorage.getItem(STORAGE_KEY)
+                .then(req => JSON.parse(req))
+                .then(json => {
+                    if (json === null) {
+                        json = [];
+                    }
+                    setTodos(json);
+                })
+                .catch(error => console.log('error!'));
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Clear all data from AsyncStorage
+    const clearAsyncStorage = async () => {
+        try {
+            await AsyncStorage.clear()
+                .then(() => {
+                    setTodos([]);
+                    console.log('Storage successfully cleared!');
+                });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    // Get data from AsyncStorage
     useEffect(() => {
-        if (route.params?.todo){
-            const newTodos = [...todos,route.params.todo];
+        if (route.params?.todo) {
+            const newKey = todos.length + 1;
+            const newTodo = { key: newKey.toString(), description: route.params.todo };
+            const newTodos = [...todos, newTodo];
+            storeData(newTodos);
+        }
+        getData();
+    }, [route.params?.todo]);
+
+    // Update data in AsyncStorage
+    useEffect(() => {
+        if (route.params?.todo) {
+            const newTodos = [...todos, route.params.todo];
             setTodos(newTodos);
         }
-    },[route.params?.todo]);
-
+    }, [route.params?.todo]);
+    // Update the header
     useLayoutEffect(() => {
         navigation.setOptions({
             headerStyle: {
                 backgroundColor: '#f0f0f0',
             },
-        headerRight:() => (
-            <AntDesign
-            style={styles.navButton}
-            name="plus"
-            size={24}
-            color= "black"
-            onPress={() => navigation.navigate('Todo')}
-            />
-        ),
+            headerRight: () => (
+                <AntDesign
+                    style={styles.navButton}
+                    name="plus"
+                    size={24}
+                    color="black"
+                    onPress={() => navigation.navigate('Todo')}
+                />
+            ),
         });
-    },[]);
+    }, []);
 
-    return(
+    return (
         <View style={styles.container}>
             <ScrollView>
                 {
-                    todos.map((todo,index) => (
-                        <View key={index} style={styles.rowContainer}>
-                            <Text style={styles.rowText}>{todo}</Text>
+                    todos.map((todo) => (
+                        <View style={styles.rowContainer} key={todo.key}>
+                            <Text style={styles.rowText}>{todo.description}</Text>
                         </View>
                     ))
                 }
             </ScrollView>
+            <Button title='Clear Data' onPress={clearAsyncStorage} />
         </View>
     )
 }
 
 const styles = StyleSheet.create({
-    container:{
+    container: {
         flex: 1,
         backgroundColor: '#fff',
         padding: 20,
     },
-    rowContainer:{
+    rowContainer: {
         flex: 1,
         flexDirection: 'row',
         marginTop: 5,
-        marginBot: 5,
+        marginBottom: 5,
     },
-    rowText:{
+    rowText: {
         fontSize: 20,
         marginLeft: 5,
     },
-    navButton:{
+    navButton: {
         marginRight: 5,
         fontSize: 24,
         padding: 4,
     },
-    });
+});
